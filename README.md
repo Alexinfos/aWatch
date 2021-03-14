@@ -1,4 +1,4 @@
-# DevBot
+# aWatch
 
 A simple wearOS watch face.
 
