@@ -15,7 +15,8 @@
         android:theme="@android:style/Theme.DeviceDefault">
         <activity
             android:name=".WatchFaceConfigActivity"
-            android:label="@string/analog_config_name">
+            android:label="@string/analog_config_name"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="fr.alexisbn.awatch.CONFIG_ANALOG" />
 
@@ -23,6 +24,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name="android.support.wearable.complications.ComplicationHelperActivity"/>
 
         <meta-data
             android:name="com.google.android.wearable.standalone"

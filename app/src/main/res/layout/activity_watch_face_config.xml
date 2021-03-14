@@ -7,10 +7,11 @@
     tools:context=".WatchFaceConfigActivity"
     android:background="@color/background">
 
-    <android.support.wearable.view.WearableRecyclerView
+    <androidx.wear.widget.WearableRecyclerView
         android:id="@+id/settingsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:focusable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
