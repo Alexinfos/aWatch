@@ -8,9 +8,13 @@ import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.support.wearable.complications.ComplicationData
+import android.support.wearable.complications.SystemProviders
+import android.support.wearable.complications.rendering.ComplicationDrawable
 import android.support.wearable.watchface.CanvasWatchFaceService
 import android.support.wearable.watchface.WatchFaceService
 import android.support.wearable.watchface.WatchFaceStyle
+import android.util.Log
 import android.view.SurfaceHolder
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
@@ -71,6 +75,7 @@ class MyWatchFace : CanvasWatchFaceService() {
     }
 
     inner class Engine : CanvasWatchFaceService.Engine() {
+        private val TAG = "CanvasWatchFaceService"
 
         private lateinit var mCalendar: Calendar
 
@@ -93,6 +98,8 @@ class MyWatchFace : CanvasWatchFaceService() {
         private var mWatchHandHighlightColor: Int = 0
         private var mWatchHandShadowColor: Int = 0
 
+        private var accentColor: Int = Color.parseColor("#00DE7A")
+
         private lateinit var mHourPaint: Paint
         private lateinit var mMinutePaint: Paint
         private lateinit var mSecondPaint: Paint
@@ -109,6 +116,11 @@ class MyWatchFace : CanvasWatchFaceService() {
         private var mAmbient: Boolean = false
         private var mLowBitAmbient: Boolean = false
         private var mBurnInProtection: Boolean = false
+
+        // Complications
+        private lateinit var complicationDrawableTopSlot: ComplicationDrawable
+        private lateinit var complicationDrawableLeftSlot: ComplicationDrawable
+        private lateinit var complicationDrawableBottomSlot: ComplicationDrawable
 
         /* Handler to update the time once a second in interactive mode. */
         private val mUpdateTimeHandler = EngineHandler(this)
@@ -127,6 +139,41 @@ class MyWatchFace : CanvasWatchFaceService() {
 
             currentTimeString = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Calendar.getInstance().time)
             currentDateString = SimpleDateFormat("dd MMM", Locale.getDefault()).format(Calendar.getInstance().time)
+
+            setActiveComplications(10, 20, 30)
+
+            // Setting default complications
+            setDefaultSystemComplicationProvider(
+                10,
+                SystemProviders.WATCH_BATTERY,
+                ComplicationData.TYPE_RANGED_VALUE
+            )
+            setDefaultSystemComplicationProvider(
+                20,
+                SystemProviders.STEP_COUNT,
+                ComplicationData.TYPE_SHORT_TEXT
+            )
+            setDefaultSystemComplicationProvider(
+                30,
+                SystemProviders.UNREAD_NOTIFICATION_COUNT,
+                ComplicationData.TYPE_SHORT_TEXT
+            )
+
+            // Create complication drawables
+            complicationDrawableTopSlot = ComplicationDrawable(this@MyWatchFace)
+            complicationDrawableTopSlot.setTextColorActive(accentColor)
+            complicationDrawableTopSlot.setTextTypefaceActive(Typeface.create(ResourcesCompat.getFont(applicationContext, R.font.montserrat_medium), Typeface.NORMAL))
+            complicationDrawableTopSlot.setRangedValuePrimaryColorActive(accentColor)
+
+            complicationDrawableLeftSlot = ComplicationDrawable(this@MyWatchFace)
+            complicationDrawableLeftSlot.setTextColorActive(accentColor)
+            complicationDrawableTopSlot.setTextTypefaceActive(Typeface.create(ResourcesCompat.getFont(applicationContext, R.font.montserrat_medium), Typeface.NORMAL))
+            complicationDrawableTopSlot.setRangedValuePrimaryColorActive(accentColor)
+
+            complicationDrawableBottomSlot = ComplicationDrawable(this@MyWatchFace)
+            complicationDrawableBottomSlot.setTextColorActive(accentColor)
+            complicationDrawableTopSlot.setTextTypefaceActive(Typeface.create(ResourcesCompat.getFont(applicationContext, R.font.montserrat_medium), Typeface.NORMAL))
+            complicationDrawableTopSlot.setRangedValuePrimaryColorActive(accentColor)
 
             initializeBackground()
             initializeWatchFace()
@@ -152,7 +199,7 @@ class MyWatchFace : CanvasWatchFaceService() {
         private fun initializeWatchFace() {
             /* Set defaults for colors */
             mWatchHandColor = Color.LTGRAY
-            mWatchHandHighlightColor = Color.GREEN
+            mWatchHandHighlightColor = accentColor
             mWatchHandShadowColor = Color.BLACK
 
             mHourPaint = Paint().apply {
@@ -237,6 +284,18 @@ class MyWatchFace : CanvasWatchFaceService() {
             // Check and trigger whether or not timer should be running (only
             // in active mode).
             updateTimer()
+        }
+
+        override fun onComplicationDataUpdate(watchFaceComplicationId: Int, data: ComplicationData?) {
+            Log.d(TAG, "onComplicationDataUpdate: id=$watchFaceComplicationId, $data")
+
+            (when (watchFaceComplicationId) {
+                10 -> complicationDrawableTopSlot
+                20 -> complicationDrawableLeftSlot
+                else -> complicationDrawableBottomSlot
+            }).setComplicationData(data)
+
+            invalidate()
         }
 
         private fun updateWatchHandStyle() {
@@ -358,11 +417,28 @@ class MyWatchFace : CanvasWatchFaceService() {
             mCalendar.timeInMillis = now
 
             drawBackground(canvas)
+            if (!isInAmbientMode) {
+                drawComplications(canvas, bounds)
+            }
             drawWatchFace(canvas)
         }
 
         private fun drawBackground(canvas: Canvas) {
             canvas.drawColor(Color.BLACK)
+        }
+
+        private fun drawComplications(canvas: Canvas, bounds: Rect) {
+            Log.d(TAG, "l=${bounds.left}, r=${bounds.right}, t=${bounds.top}, b=${bounds.bottom}")
+            val w = bounds.right - bounds.left
+            val h = bounds.bottom - bounds.top
+
+            complicationDrawableTopSlot.setBounds((bounds.left + (3f/8)*w).toInt(), (bounds.top + (1f/8)*h).toInt(), (bounds.left + (5f/8)*w).toInt(), (bounds.top + (3f/8)*h).toInt())
+            complicationDrawableLeftSlot.setBounds((bounds.left + (1f/8)*w).toInt(), (bounds.top + (3f/8)*h).toInt(), (bounds.left + (3f/8)*w).toInt(), (bounds.top + (5f/8)*h).toInt())
+            complicationDrawableBottomSlot.setBounds((bounds.left + (3f/8)*w).toInt(), (bounds.top + (5f/8)*h).toInt(), (bounds.left + (5f/8)*w).toInt(), (bounds.top + (7f/8)*h).toInt())
+
+            complicationDrawableTopSlot.draw(canvas, System.currentTimeMillis())
+            complicationDrawableLeftSlot.draw(canvas, System.currentTimeMillis())
+            complicationDrawableBottomSlot.draw(canvas, System.currentTimeMillis())
         }
 
         private fun drawWatchFace(canvas: Canvas) {

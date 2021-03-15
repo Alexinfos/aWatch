@@ -33,10 +33,10 @@ class WatchFaceConfigActivity : AppCompatActivity() {
 
     var settingsItems = arrayListOf<Triple<String, Int, String>>()
 
-    var selectedColor = Color.GREEN
-    var selectedComplicationForSlot1 = -1
-    var selectedComplicationForSlot2 = -1
-    var selectedComplicationForSlot3 = -1
+    var selectedColor = Color.parseColor("#00DE7A")
+    var complicationTopSlotId = 10
+    var complicationLeftSlotId = 20
+    var complicationBottomSlotId = 30
 
     private val supportedComplicationTypes = intArrayOf(
         ComplicationData.TYPE_RANGED_VALUE,
@@ -97,7 +97,7 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                             this@WatchFaceConfigActivity, ComponentName(
                                 view.context,
                                 MyWatchFace::class.java
-                            ), selectedComplicationForSlot1, *supportedComplicationTypes
+                            ), complicationTopSlotId, *supportedComplicationTypes
                         )
                         startActivityForResult(intent, 20561)
                     }
@@ -107,7 +107,7 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                             this@WatchFaceConfigActivity, ComponentName(
                                 view.context,
                                 MyWatchFace::class.java
-                            ), selectedComplicationForSlot2, *supportedComplicationTypes
+                            ), complicationLeftSlotId, *supportedComplicationTypes
                         )
                         startActivityForResult(intent, 20562)
                     }
@@ -117,7 +117,7 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                             this@WatchFaceConfigActivity, ComponentName(
                                 view.context,
                                 MyWatchFace::class.java
-                            ), selectedComplicationForSlot3, *supportedComplicationTypes
+                            ), complicationBottomSlotId, *supportedComplicationTypes
                         )
                         startActivityForResult(intent, 20563)
                     }
