@@ -17,6 +17,8 @@ import android.support.wearable.watchface.WatchFaceStyle
 import android.util.Log
 import android.view.SurfaceHolder
 import android.widget.Toast
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 
 import java.lang.ref.WeakReference
@@ -122,6 +124,8 @@ class MyWatchFace : CanvasWatchFaceService() {
         private lateinit var complicationDrawableLeftSlot: ComplicationDrawable
         private lateinit var complicationDrawableBottomSlot: ComplicationDrawable
 
+        private var prideRing = false
+
         /* Handler to update the time once a second in interactive mode. */
         private val mUpdateTimeHandler = EngineHandler(this)
 
@@ -174,6 +178,9 @@ class MyWatchFace : CanvasWatchFaceService() {
             complicationDrawableBottomSlot.setTextColorActive(accentColor)
             complicationDrawableTopSlot.setTextTypefaceActive(Typeface.create(ResourcesCompat.getFont(applicationContext, R.font.montserrat_medium), Typeface.NORMAL))
             complicationDrawableTopSlot.setRangedValuePrimaryColorActive(accentColor)
+
+            val sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE) ?: return
+            prideRing = sharedPref.getBoolean("prideRing", false)
 
             initializeBackground()
             initializeWatchFace()
@@ -428,7 +435,7 @@ class MyWatchFace : CanvasWatchFaceService() {
         }
 
         private fun drawComplications(canvas: Canvas, bounds: Rect) {
-            Log.d(TAG, "l=${bounds.left}, r=${bounds.right}, t=${bounds.top}, b=${bounds.bottom}")
+            //Log.d(TAG, "l=${bounds.left}, r=${bounds.right}, t=${bounds.top}, b=${bounds.bottom}")
             val w = bounds.right - bounds.left
             val h = bounds.bottom - bounds.top
 
@@ -451,14 +458,16 @@ class MyWatchFace : CanvasWatchFaceService() {
              */
             val innerTickRadius = mCenterX - 10
             val outerTickRadius = mCenterX - 5
-            for (tickIndex in 0..11) {
-                val tickRot = (tickIndex.toDouble() * Math.PI * 2.0 / 12).toFloat()
-                val innerX = Math.sin(tickRot.toDouble()).toFloat() * innerTickRadius
-                val innerY = (-Math.cos(tickRot.toDouble())).toFloat() * innerTickRadius
-                val outerX = Math.sin(tickRot.toDouble()).toFloat() * outerTickRadius
-                val outerY = (-Math.cos(tickRot.toDouble())).toFloat() * outerTickRadius
-                canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
+            if (!prideRing || mAmbient) {
+                for (tickIndex in 0..11) {
+                    val tickRot = (tickIndex.toDouble() * Math.PI * 2.0 / 12).toFloat()
+                    val innerX = Math.sin(tickRot.toDouble()).toFloat() * innerTickRadius
+                    val innerY = (-Math.cos(tickRot.toDouble())).toFloat() * innerTickRadius
+                    val outerX = Math.sin(tickRot.toDouble()).toFloat() * outerTickRadius
+                    val outerY = (-Math.cos(tickRot.toDouble())).toFloat() * outerTickRadius
+                    canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
                         mCenterX + outerX, mCenterY + outerY, mTickPaint)
+                }
             }
 
             /*
@@ -507,7 +516,6 @@ class MyWatchFace : CanvasWatchFaceService() {
                         mCenterX,
                         mCenterY - mSecondHandLength,
                         mSecondPaint)
-
             }
             canvas.drawCircle(
                     mCenterX,
@@ -515,8 +523,15 @@ class MyWatchFace : CanvasWatchFaceService() {
                     CENTER_GAP_AND_CIRCLE_RADIUS,
                     mCirclePaint)
 
-            /* Restore the canvas" original orientation. */
+            /* Restore the canvas' original orientation. */
             canvas.restore()
+
+            if (!mAmbient && prideRing) {
+                val drawable = ContextCompat.getDrawable(this@MyWatchFace, R.drawable.ic_ring3)!!
+                val offset = (mWidth*(3f/60)).toInt()
+                drawable.setBounds(-offset, -offset, mWidth.toInt()+offset, mHeight.toInt()+offset)
+                drawable.draw(canvas)
+            }
         }
 
         override fun onVisibilityChanged(visible: Boolean) {
@@ -524,7 +539,7 @@ class MyWatchFace : CanvasWatchFaceService() {
 
             if (visible) {
                 registerReceiver()
-                /* Update time zone in case it changed while we weren"t visible. */
+                /* Update time zone in case it changed while we weren't visible. */
                 mCalendar.timeZone = TimeZone.getDefault()
                 invalidate()
             } else {

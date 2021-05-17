@@ -1,7 +1,9 @@
 package fr.alexisbn.awatch
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
 import android.support.wearable.complications.ComplicationData
@@ -37,6 +39,9 @@ class WatchFaceConfigActivity : AppCompatActivity() {
     var complicationTopSlotId = 10
     var complicationLeftSlotId = 20
     var complicationBottomSlotId = 30
+    var prideRing = false
+
+    private lateinit var sharedPref: SharedPreferences
 
     private val supportedComplicationTypes = intArrayOf(
         ComplicationData.TYPE_RANGED_VALUE,
@@ -50,6 +55,9 @@ class WatchFaceConfigActivity : AppCompatActivity() {
         binding = ActivityWatchFaceConfigBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
+        sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE) ?: return
+        prideRing = sharedPref.getBoolean("prideRing", false)
 
         settingsItems.add(
             Triple(
@@ -77,6 +85,13 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                 "Complication 3",
                 R.drawable.ic_baseline_3_24,
                 "THIRD_COMPLICATION_SELECTOR"
+            )
+        )
+        settingsItems.add(
+            Triple(
+                "Pride ring: " + if (prideRing) "on" else "off",
+                R.drawable.ic_ring,
+                "PRIDE_TOGGLE"
             )
         )
 
@@ -121,6 +136,15 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                         )
                         startActivityForResult(intent, 20563)
                     }
+                    "PRIDE_TOGGLE" -> {
+                        Log.d(TAG, "Pride")
+                        prideRing = !prideRing
+                        with(sharedPref.edit()) {
+                            putBoolean("prideRing", prideRing)
+                            apply()
+                        }
+                        viewAdapter.updateItemTitle(4, "Pride ring: " + if (prideRing) "on" else "off")
+                    }
                     else -> {
                         Log.d(TAG, "unknown")
                     }
@@ -151,9 +175,6 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                     selectedColor = ColorPickActivity.getPickedColor(data!!)
                     viewAdapter.updateSelectedAccentColor(selectedColor)
                 }
-            }
-            20561 -> {
-
             }
         }
     }
@@ -211,6 +232,15 @@ class WatchFaceConfigActivity : AppCompatActivity() {
 
         fun updateSelectedAccentColor(newAccentColor: Int) {
             selectedAccentColor = newAccentColor
+            notifyDataSetChanged()
+        }
+
+        fun updateItemTitle(itemPos: Int, newTitle: String) {
+            settingsItems[itemPos] = Triple(
+                newTitle,
+                settingsItems[itemPos].second,
+                settingsItems[itemPos].third
+            )
             notifyDataSetChanged()
         }
 
