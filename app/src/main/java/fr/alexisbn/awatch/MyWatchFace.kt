@@ -13,14 +13,13 @@ import android.support.wearable.watchface.WatchFaceService
 import android.support.wearable.watchface.WatchFaceStyle
 import android.util.Log
 import android.view.SurfaceHolder
-import android.widget.Toast
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-
 import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * Updates rate in milliseconds for interactive mode. We update once a second to advance the
@@ -122,6 +121,7 @@ class MyWatchFace : CanvasWatchFaceService() {
         private lateinit var complicationDrawableBottomSlot: ComplicationDrawable
 
         private var prideRing = false
+        private var hideTicksInAmbient = false
 
         private lateinit var sharedPref: SharedPreferences
 
@@ -146,6 +146,7 @@ class MyWatchFace : CanvasWatchFaceService() {
             sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE) ?: return
             prideRing = sharedPref.getBoolean("prideRing", false)
             accentColor = Color.parseColor(sharedPref.getString("selectedAccentColor", "#00DE7A"))
+            hideTicksInAmbient = sharedPref.getBoolean("hideTicksInAmbient", false)
 
             setWatchFaceStyle(WatchFaceStyle.Builder(this@MyWatchFace).setAcceptsTapEvents(true).build())
 
@@ -414,6 +415,7 @@ class MyWatchFace : CanvasWatchFaceService() {
                 WatchFaceService.TAP_TYPE_TAP -> {
                     // The user has completed the tap gesture.
                     prideRing = sharedPref.getBoolean("prideRing", false)
+                    hideTicksInAmbient = sharedPref.getBoolean("hideTicksInAmbient", false)
                     accentColor = Color.parseColor(sharedPref.getString("selectedAccentColor", "#00DE7A"))
                     initializeWatchFace()
                     complicationDrawableTopSlot.setTextColorActive(accentColor)
@@ -468,13 +470,13 @@ class MyWatchFace : CanvasWatchFaceService() {
              */
             val innerTickRadius = mCenterX - 10
             val outerTickRadius = mCenterX - 5
-            if (!prideRing || mAmbient) {
+            if ((!prideRing && !mAmbient) || (mAmbient && !hideTicksInAmbient)) {
                 for (tickIndex in 0..11) {
                     val tickRot = (tickIndex.toDouble() * Math.PI * 2.0 / 12).toFloat()
-                    val innerX = Math.sin(tickRot.toDouble()).toFloat() * innerTickRadius
-                    val innerY = (-Math.cos(tickRot.toDouble())).toFloat() * innerTickRadius
-                    val outerX = Math.sin(tickRot.toDouble()).toFloat() * outerTickRadius
-                    val outerY = (-Math.cos(tickRot.toDouble())).toFloat() * outerTickRadius
+                    val innerX = sin(tickRot.toDouble()).toFloat() * innerTickRadius
+                    val innerY = (-cos(tickRot.toDouble())).toFloat() * innerTickRadius
+                    val outerX = sin(tickRot.toDouble()).toFloat() * outerTickRadius
+                    val outerY = (-cos(tickRot.toDouble())).toFloat() * outerTickRadius
                     canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
                         mCenterX + outerX, mCenterY + outerY, mTickPaint)
                 }

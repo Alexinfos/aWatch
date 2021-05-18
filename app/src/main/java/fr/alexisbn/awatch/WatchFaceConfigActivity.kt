@@ -33,13 +33,14 @@ class WatchFaceConfigActivity : AppCompatActivity() {
     private lateinit var viewManager: WearableLinearLayoutManager
     private lateinit var viewAdapterListener: SettingsListAdapter.Callback
 
-    var settingsItems = arrayListOf<Triple<String, Int, String>>()
+    private var settingsItems = arrayListOf<Triple<String, Int, String>>()
 
     var selectedColor = Color.parseColor("#00DE7A")
     var complicationTopSlotId = 10
     var complicationLeftSlotId = 20
     var complicationBottomSlotId = 30
     var prideRing = false
+    var hideTicksInAmbient = false
 
     private lateinit var sharedPref: SharedPreferences
 
@@ -62,6 +63,7 @@ class WatchFaceConfigActivity : AppCompatActivity() {
         ) ?: return
         prideRing = sharedPref.getBoolean("prideRing", false)
         selectedColor = Color.parseColor(sharedPref.getString("selectedAccentColor", "#00DE7A"))
+        hideTicksInAmbient = sharedPref.getBoolean("hideTicksInAmbient", false)
 
         settingsItems.add(
             Triple(
@@ -96,6 +98,13 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                 "Pride ring: " + if (prideRing) "on" else "off",
                 R.drawable.ic_ring3,
                 "PRIDE_TOGGLE"
+            )
+        )
+        settingsItems.add(
+            Triple(
+                "Ticks in ambient: " + if (!hideTicksInAmbient) "on" else "off",
+                R.drawable.ic_ticks,
+                "TICKS_TOGGLE"
             )
         )
 
@@ -150,6 +159,18 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                         viewAdapter.updateItemTitle(
                             4,
                             "Pride ring: " + if (prideRing) "on" else "off"
+                        )
+                    }
+                    "TICKS_TOGGLE" -> {
+                        Log.d(TAG, "Ticks")
+                        hideTicksInAmbient = !hideTicksInAmbient
+                        with(sharedPref.edit()) {
+                            putBoolean("hideTicksInAmbient", hideTicksInAmbient)
+                            apply()
+                        }
+                        viewAdapter.updateItemTitle(
+                            5,
+                            "Ticks in ambient: " + if (!hideTicksInAmbient) "on" else "off"
                         )
                     }
                     else -> {
@@ -258,7 +279,7 @@ class WatchFaceConfigActivity : AppCompatActivity() {
         override fun getItemCount() = settingsItems.size
 
         companion object {
-            private val TAG = "WFCA.SettingsListAdapter"
+            private const val TAG = "WFCA.SettingsListAdapter"
         }
     }
 }
