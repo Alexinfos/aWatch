@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">aWatch</string>
     <string name="message">Watch face tapped</string>
-    <string name="my_analog_name">Analog</string>
+    <string name="my_analog_name">aWatch</string>
     <string name="analog_config_name">Config</string>
     <string name="preference_file_key" translatable="false">fr.alexisbn.awatch.sharedprefs</string>
 </resources>

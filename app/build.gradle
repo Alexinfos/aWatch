@@ -11,8 +11,8 @@ android {
         applicationId "fr.alexisbn.awatch"
         minSdkVersion 25
         targetSdkVersion 29
-        versionCode 110000
-        versionName "1.1.0"
+        versionCode 111000
+        versionName "1.1.1"
     }
 
     buildFeatures {

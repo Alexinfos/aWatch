@@ -56,8 +56,12 @@ class WatchFaceConfigActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE) ?: return
+        sharedPref = getSharedPreferences(
+            getString(R.string.preference_file_key),
+            Context.MODE_PRIVATE
+        ) ?: return
         prideRing = sharedPref.getBoolean("prideRing", false)
+        selectedColor = Color.parseColor(sharedPref.getString("selectedAccentColor", "#00DE7A"))
 
         settingsItems.add(
             Triple(
@@ -69,28 +73,28 @@ class WatchFaceConfigActivity : AppCompatActivity() {
         settingsItems.add(
             Triple(
                 "Complication 1",
-                R.drawable.ic_baseline_one_24,
+                R.drawable.ic_complication_top,
                 "FIRST_COMPLICATION_SELECTOR"
             )
         )
         settingsItems.add(
             Triple(
                 "Complication 2",
-                R.drawable.ic_baseline_two_24,
+                R.drawable.ic_complication_left,
                 "SECOND_COMPLICATION_SELECTOR"
             )
         )
         settingsItems.add(
             Triple(
                 "Complication 3",
-                R.drawable.ic_baseline_3_24,
+                R.drawable.ic_complication_bottom,
                 "THIRD_COMPLICATION_SELECTOR"
             )
         )
         settingsItems.add(
             Triple(
                 "Pride ring: " + if (prideRing) "on" else "off",
-                R.drawable.ic_ring,
+                R.drawable.ic_ring3,
                 "PRIDE_TOGGLE"
             )
         )
@@ -143,7 +147,10 @@ class WatchFaceConfigActivity : AppCompatActivity() {
                             putBoolean("prideRing", prideRing)
                             apply()
                         }
-                        viewAdapter.updateItemTitle(4, "Pride ring: " + if (prideRing) "on" else "off")
+                        viewAdapter.updateItemTitle(
+                            4,
+                            "Pride ring: " + if (prideRing) "on" else "off"
+                        )
                     }
                     else -> {
                         Log.d(TAG, "unknown")
@@ -171,8 +178,11 @@ class WatchFaceConfigActivity : AppCompatActivity() {
         when (requestCode) {
             4242 -> {
                 if (resultCode != RESULT_CANCELED) {
-                    // TODO: update color.
                     selectedColor = ColorPickActivity.getPickedColor(data!!)
+                    with(sharedPref.edit()) {
+                        putString("selectedAccentColor", String.format("#%06X", 0xFFFFFF and selectedColor))
+                        apply()
+                    }
                     viewAdapter.updateSelectedAccentColor(selectedColor)
                 }
             }

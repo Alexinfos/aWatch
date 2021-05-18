@@ -1,9 +1,6 @@
 package fr.alexisbn.awatch
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
@@ -126,6 +123,8 @@ class MyWatchFace : CanvasWatchFaceService() {
 
         private var prideRing = false
 
+        private lateinit var sharedPref: SharedPreferences
+
         /* Handler to update the time once a second in interactive mode. */
         private val mUpdateTimeHandler = EngineHandler(this)
 
@@ -143,6 +142,12 @@ class MyWatchFace : CanvasWatchFaceService() {
 
             currentTimeString = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Calendar.getInstance().time)
             currentDateString = SimpleDateFormat("dd MMM", Locale.getDefault()).format(Calendar.getInstance().time)
+
+            sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE) ?: return
+            prideRing = sharedPref.getBoolean("prideRing", false)
+            accentColor = Color.parseColor(sharedPref.getString("selectedAccentColor", "#00DE7A"))
+
+            setWatchFaceStyle(WatchFaceStyle.Builder(this@MyWatchFace).setAcceptsTapEvents(true).build())
 
             setActiveComplications(10, 20, 30)
 
@@ -178,9 +183,6 @@ class MyWatchFace : CanvasWatchFaceService() {
             complicationDrawableBottomSlot.setTextColorActive(accentColor)
             complicationDrawableTopSlot.setTextTypefaceActive(Typeface.create(ResourcesCompat.getFont(applicationContext, R.font.montserrat_medium), Typeface.NORMAL))
             complicationDrawableTopSlot.setRangedValuePrimaryColorActive(accentColor)
-
-            val sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE) ?: return
-            prideRing = sharedPref.getBoolean("prideRing", false)
 
             initializeBackground()
             initializeWatchFace()
@@ -400,7 +402,8 @@ class MyWatchFace : CanvasWatchFaceService() {
          * Captures tap event (and tap type). The [WatchFaceService.TAP_TYPE_TAP] case can be
          * used for implementing specific logic to handle the gesture.
          */
-        override fun onTapCommand(tapType: Int, x: Int, y: Int, eventTime: Long) {
+        override fun onTapCommand(@TapType tapType: Int, x: Int, y: Int, eventTime: Long) {
+            Log.d(TAG, "onTapCommand")
             when (tapType) {
                 WatchFaceService.TAP_TYPE_TOUCH -> {
                     // The user has started touching the screen.
@@ -408,11 +411,18 @@ class MyWatchFace : CanvasWatchFaceService() {
                 WatchFaceService.TAP_TYPE_TOUCH_CANCEL -> {
                     // The user has started a different gesture or otherwise cancelled the tap.
                 }
-                WatchFaceService.TAP_TYPE_TAP ->
+                WatchFaceService.TAP_TYPE_TAP -> {
                     // The user has completed the tap gesture.
-                    // TODO: Add code to handle the tap gesture.
-                    Toast.makeText(applicationContext, R.string.message, Toast.LENGTH_SHORT)
-                            .show()
+                    prideRing = sharedPref.getBoolean("prideRing", false)
+                    accentColor = Color.parseColor(sharedPref.getString("selectedAccentColor", "#00DE7A"))
+                    initializeWatchFace()
+                    complicationDrawableTopSlot.setTextColorActive(accentColor)
+                    complicationDrawableTopSlot.setRangedValuePrimaryColorActive(accentColor)
+                    complicationDrawableLeftSlot.setTextColorActive(accentColor)
+                    complicationDrawableLeftSlot.setRangedValuePrimaryColorActive(accentColor)
+                    complicationDrawableBottomSlot.setTextColorActive(accentColor)
+                    complicationDrawableBottomSlot.setRangedValuePrimaryColorActive(accentColor)
+                }
             }
             invalidate()
         }
